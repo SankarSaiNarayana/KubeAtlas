@@ -1,0 +1,24 @@
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+  # Log mutations on core workload resources
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "apps"
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - group: ""
+        resources: ["services", "configmaps", "secrets", "pods"]
+      - group: "networking.k8s.io"
+        resources: ["ingresses", "networkpolicies"]
+
+  # Log RBAC changes
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "rbac.authorization.k8s.io"
+        resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+
+  # Skip high-volume read requests
+  - level: None
+    verbs: ["get", "list", "watch"]
