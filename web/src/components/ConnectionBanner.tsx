@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { useDashboardContext } from "../context/DashboardContext";
 
 export default function ConnectionBanner() {
-  const { connected, error, loading, isEmpty, loadDemo, seeding, refresh, userEmail, setUserEmail } =
-    useDashboardContext();
-  const [draftEmail, setDraftEmail] = useState(userEmail);
+  const { connected, error, loading, isEmpty, refresh, overview } = useDashboardContext();
 
   if (loading) {
     return (
@@ -16,41 +13,11 @@ export default function ConnectionBanner() {
   }
 
   if (!connected) {
-    if (!userEmail) {
-      return (
-        <div className="banner banner-warn">
-          <div>
-            <strong>Sign in with your email</strong>
-            <p>
-              Enter the email address that is allowed to access the dashboard API.
-            </p>
-            {error ? <p className="muted">{error}</p> : null}
-          </div>
-          <div className="login-inline">
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={draftEmail}
-              onChange={(event) => setDraftEmail(event.target.value)}
-            />
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!draftEmail.trim()}
-              onClick={() => setUserEmail(draftEmail.trim())}
-            >
-              Sign in
-            </button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="banner banner-error">
         <div>
           <strong>API not connected</strong>
-          <p>{error}</p>
+          <p>{error ?? "Cannot reach the API"}</p>
           <ol className="banner-steps">
             <li>
               <code>docker compose -f deploy/docker-compose.yml up -d postgres</code>
@@ -58,7 +25,12 @@ export default function ConnectionBanner() {
             <li>
               <code>go run ./cmd/api</code>
             </li>
-            <li>Refresh this page</li>
+            <li>
+              <code>export AI_SERVICE_URL=http://localhost:8090 && make run-ai</code> (optional)
+            </li>
+            <li>
+              <code>go run ./cmd/worker</code> (cluster watch)
+            </li>
           </ol>
         </div>
         <button type="button" className="btn btn-primary" onClick={() => refresh()}>
@@ -72,20 +44,12 @@ export default function ConnectionBanner() {
     return (
       <div className="banner banner-warn">
         <div>
-          <strong>Connected — no data yet</strong>
+          <strong>Connected — waiting for cluster data</strong>
           <p>
-            Load sample graph, changes, and an incident to explore the dashboard, or run{" "}
-            <code>go run ./cmd/graph</code> against your cluster.
+            Resources: {overview?.total_resources ?? 0}. Run the worker against a Kubernetes
+            cluster to populate health, incidents, and AI analysis.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={seeding}
-          onClick={() => loadDemo()}
-        >
-          {seeding ? "Loading…" : "Load demo data"}
-        </button>
       </div>
     );
   }

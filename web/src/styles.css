@@ -613,6 +613,58 @@ tr:hover td {
   background: #ffffff06;
 }
 
+.health-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.health-healthy {
+  background: #22c55e22;
+  color: var(--green);
+}
+
+.health-warning {
+  background: #f59e0b22;
+  color: var(--amber);
+}
+
+.health-critical {
+  background: #ef444422;
+  color: var(--red);
+}
+
+.card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.investigation-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  font-size: 0.9rem;
+}
+
+.investigation-meta dt {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.investigation-meta dd {
+  margin: 0;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
 .kind-tag {
   font-size: 0.75rem;
   font-weight: 600;

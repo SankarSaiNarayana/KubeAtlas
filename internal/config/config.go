@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -14,7 +15,9 @@ type Config struct {
 	ClusterID     string
 	AllowedEmails []string
 	AdminEmails   []string
-	EmailHeader   string
+	EmailHeader     string
+	AIServiceURL    string
+	AIServiceTimeout time.Duration
 }
 
 func Load() Config {
@@ -27,8 +30,18 @@ func Load() Config {
 		ClusterID:     getenv("CLUSTER_ID", "local"),
 		AllowedEmails: splitAndTrim(os.Getenv("API_ALLOWED_EMAILS")),
 		AdminEmails:   splitAndTrim(os.Getenv("API_ADMIN_EMAILS")),
-		EmailHeader:   getenv("API_EMAIL_HEADER", "X-Forwarded-Email"),
+		EmailHeader:        getenv("API_EMAIL_HEADER", "X-Forwarded-Email"),
+		AIServiceURL:       os.Getenv("AI_SERVICE_URL"),
+		AIServiceTimeout:   parseDuration(getenv("AI_SERVICE_TIMEOUT", "90s"), 90*time.Second),
 	}
+}
+
+func parseDuration(raw string, fallback time.Duration) time.Duration {
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return fallback
+	}
+	return d
 }
 
 func splitAndTrim(value string) []string {

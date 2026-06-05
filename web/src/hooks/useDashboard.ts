@@ -37,27 +37,26 @@ export function useDashboard() {
   }, [userEmail]);
 
   const refresh = useCallback(async () => {
-    if (!userEmail) {
-      setError("Enter your email to connect");
-      setConnected(false);
-      setLoading(false);
-      return;
-    }
-
     try {
       const s = await getStatus();
       setStatus(s);
       setConnected(true);
       setError(null);
 
-      const [g, c, i] = await Promise.all([
-        getGraph(),
-        getChanges("24h", 20),
-        getIncidents(),
-      ]);
-      setGraph(g);
-      setChanges(c.changes ?? []);
-      setIncidents(i.incidents ?? []);
+      try {
+        const [g, c, i] = await Promise.all([
+          getGraph(),
+          getChanges("24h", 20),
+          getIncidents(),
+        ]);
+        setGraph(g);
+        setChanges(c.changes ?? []);
+        setIncidents(i.incidents ?? []);
+      } catch {
+        setGraph({ nodes: [], edges: [] });
+        setChanges([]);
+        setIncidents([]);
+      }
     } catch (e) {
       setConnected(false);
       setStatus(null);

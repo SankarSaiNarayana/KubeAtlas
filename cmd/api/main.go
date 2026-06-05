@@ -11,6 +11,9 @@ import (
 	"github.com/kube-dashboard/kube_dashboard/internal/api/handlers"
 	"github.com/kube-dashboard/kube_dashboard/internal/api/middleware"
 	"github.com/kube-dashboard/kube_dashboard/internal/config"
+	"github.com/kube-dashboard/kube_dashboard/internal/execution"
+	"github.com/kube-dashboard/kube_dashboard/internal/k8sclient"
+	"github.com/kube-dashboard/kube_dashboard/internal/realtime"
 	"github.com/kube-dashboard/kube_dashboard/internal/store"
 )
 
@@ -34,6 +37,7 @@ func main() {
 		migrations := []string{
 			"migrations/001_init.sql",
 			"migrations/002_add_graph_node_id.sql",
+			"migrations/003_kubeatlas.sql",
 		}
 		for _, migration := range migrations {
 			if err := st.Migrate(ctx, migration); err != nil {
@@ -42,8 +46,16 @@ func main() {
 		}
 	}
 
+	hub := realtime.NewHub()
+	var exec *execution.Executor
+	if client, _, err := k8sclient.New(); err == nil {
+		exec = execution.NewExecutor(cfg.ClusterID, client, st, st, st, hub)
+	} else {
+		log.Printf("kubernetes client unavailable for execution: %v", err)
+	}
+
 	mux := http.NewServeMux()
-	h := handlers.New(st, cfg)
+	h := handlers.NewWithAtlas(st, cfg, hub, exec)
 	h.Register(mux)
 
 	server := &http.Server{Addr: cfg.APIAddr, Handler: middleware.CORS(middleware.Auth(mux, cfg))}

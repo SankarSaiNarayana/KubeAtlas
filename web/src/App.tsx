@@ -2,38 +2,49 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import ConnectionBanner from "./components/ConnectionBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { DashboardProvider, useDashboardContext } from "./context/DashboardContext";
-import ChangesPage from "./pages/ChangesPage";
-import HomePage from "./pages/HomePage";
-import IncidentsPage from "./pages/IncidentsPage";
+import AtlasIncidentsPage from "./pages/AtlasIncidentsPage";
+import AtlasOverviewPage from "./pages/AtlasOverviewPage";
+import ExecutionsPage from "./pages/ExecutionsPage";
+import InvestigationsPage from "./pages/InvestigationsPage";
+import RemediationPage from "./pages/RemediationPage";
+import ResourcesPage from "./pages/ResourcesPage";
 
 function Sidebar() {
-  const { connected, status, refresh, loading } = useDashboardContext();
-  const cluster = status?.cluster_id ?? "—";
+  const { connected, refresh, loading } = useDashboardContext();
 
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-icon">◇</div>
         <div>
-          <h1>Kube Dashboard</h1>
-          <p className="tagline">Operational intelligence</p>
+          <h1>KubeAtlas</h1>
+          <p className="tagline">Incident intelligence</p>
         </div>
       </div>
 
       <div className={`conn-pill ${connected ? "conn-ok" : "conn-off"}`}>
         <span className="conn-dot" />
-        {connected ? `Connected · ${cluster}` : "Disconnected"}
+        {connected ? "API connected" : "Disconnected"}
       </div>
 
       <nav>
         <NavLink to="/" end>
           <span className="nav-icon">▣</span> Overview
         </NavLink>
-        <NavLink to="/changes">
-          <span className="nav-icon">↻</span> Changes
+        <NavLink to="/resources">
+          <span className="nav-icon">◫</span> Resources
         </NavLink>
         <NavLink to="/incidents">
           <span className="nav-icon">!</span> Incidents
+        </NavLink>
+        <NavLink to="/investigations">
+          <span className="nav-icon">⌕</span> Investigations
+        </NavLink>
+        <NavLink to="/remediation">
+          <span className="nav-icon">⚙</span> Remediation
+        </NavLink>
+        <NavLink to="/executions">
+          <span className="nav-icon">↯</span> Executions
         </NavLink>
       </nav>
 
@@ -59,9 +70,12 @@ function AppShell() {
         <ConnectionBanner />
         <main className="content">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/changes" element={<ChangesPage />} />
-            <Route path="/incidents" element={<IncidentsPage />} />
+            <Route path="/" element={<AtlasOverviewPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/incidents" element={<AtlasIncidentsPage />} />
+            <Route path="/investigations" element={<InvestigationsPage />} />
+            <Route path="/remediation" element={<RemediationPage />} />
+            <Route path="/executions" element={<ExecutionsPage />} />
           </Routes>
         </main>
       </div>

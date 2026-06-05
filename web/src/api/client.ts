@@ -85,7 +85,7 @@ export function saveUserEmail(email: string) {
   }
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
+export async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
   const email = getUserEmail();
   const headers = new Headers(init?.headers as HeadersInit);

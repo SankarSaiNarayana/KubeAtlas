@@ -4,7 +4,9 @@ Real-time operational intelligence for Kubernetes: live dependency graph, change
 
 ## Quick Start
 
-See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for full run instructions.
+**KubeAtlas (Go + Python AI):** **[docs/RUN.md](docs/RUN.md)** — simple 4-terminal flow.
+
+See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for the original graph/ingest setup.
 
 ```bash
 # One-command dev (Postgres + API + UI + demo data)

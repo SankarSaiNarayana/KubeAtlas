@@ -10,17 +10,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kube-dashboard/kube_dashboard/internal/config"
+	"github.com/kube-dashboard/kube_dashboard/internal/execution"
 	"github.com/kube-dashboard/kube_dashboard/internal/models"
+	"github.com/kube-dashboard/kube_dashboard/internal/realtime"
 	"github.com/kube-dashboard/kube_dashboard/internal/store"
 )
 
 type Handler struct {
-	store  *store.Store
-	config config.Config
+	store    *store.Store
+	config   config.Config
+	eventHub *realtime.Hub
+	executor *execution.Executor
 }
 
 func New(st *store.Store, cfg config.Config) *Handler {
 	return &Handler{store: st, config: cfg}
+}
+
+func NewWithAtlas(st *store.Store, cfg config.Config, hub *realtime.Hub, exec *execution.Executor) *Handler {
+	return &Handler{store: st, config: cfg, eventHub: hub, executor: exec}
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {
@@ -33,6 +41,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/webhooks/robusta", h.RobustaWebhook)
 	mux.HandleFunc("/api/v1/webhooks/gitops", h.GitOpsWebhook)
 	mux.HandleFunc("/api/v1/resources/", h.ResourceRouter)
+	h.RegisterAtlas(mux)
 }
 
 func (h *Handler) ChangeRouter(w http.ResponseWriter, r *http.Request) {
