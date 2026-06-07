@@ -85,10 +85,9 @@ make check
 
 1. **Worker** watches Pods, Deployments, etc. → saves to `cluster_resources`
 2. **Health engine** sets HEALTHY / WARNING / CRITICAL
-3. **Incidents** open on health degradation
-4. **Context** collected (logs, events, describe)
-5. **Python AI** investigates + suggests remediations (`POST /v1/investigate`, `/v1/remediate`)
-6. **Human approves** in UI → **Go worker/API** executes on cluster
+3. **Incidents** stay visible until resource is healthy again
+4. **Context** collected → **Python AI** investigates → remediations suggested
+5. **Incidents page**: click **Run investigation** → see suggestions → **Verify & close** when done
 
 ## Common issues
 

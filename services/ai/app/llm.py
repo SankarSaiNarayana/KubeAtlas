@@ -68,21 +68,28 @@ Resource: {resource}
 Context: {context}
 """
 
-REMEDIATE_PROMPT = """You are a Kubernetes remediation advisor. Human approval is REQUIRED before any action.
-Given investigation results, suggest 1-3 safe remediation actions as JSON:
+REMEDIATE_PROMPT = """You are a Kubernetes remediation advisor.
+Given investigation results, suggest exactly ONE best remediation action as JSON:
 {{
   "recommendations": [
     {{
       "action_type": "restart_pod|restart_deployment|rollback_deployment|scale_deployment|delete_failed_pod",
-      "reason": "why",
+      "reason": "short why this is the best fix",
       "confidence_score": 0.0-1.0,
       "risk_score": 0.0-1.0,
       "expected_outcome": "what should happen",
-      "parameters": {{"namespace": "...", "name": "...", "kind": "...", "uid": "..."}}
+      "parameters": {{
+        "namespace": "...",
+        "name": "...",
+        "kind": "...",
+        "uid": "...",
+        "kubectl_command": "exact kubectl command the operator should run"
+      }}
     }}
   ]
 }}
 
+Return only one item in recommendations. Include kubectl_command in parameters.
 Allowed actions only: restart_pod, restart_deployment, rollback_deployment, scale_deployment, delete_failed_pod.
 Never suggest destructive cluster-wide changes.
 
@@ -162,7 +169,8 @@ def remediate_llm(req: RemediateRequest) -> list[RemediationItem] | None:
             items.append(RemediationItem.model_validate(raw))
         if not items:
             return None
-        return items
+        best = max(items, key=lambda i: i.confidence_score)
+        return [best]
     except Exception as e:
         print(f"ERROR: LLM remediation failed: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)

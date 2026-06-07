@@ -245,6 +245,23 @@ func (s *Store) ResolveAtlasIncident(ctx context.Context, incidentID string) err
 	return err
 }
 
+func (s *Store) UpdateAtlasIncidentReason(ctx context.Context, incidentID, reason string, health domain.HealthState) error {
+	iid, err := uuid.Parse(incidentID)
+	if err != nil {
+		return err
+	}
+	sev := "warning"
+	if health == domain.HealthCritical {
+		sev = "critical"
+	}
+	_, err = s.pool.Exec(ctx, `
+		UPDATE atlas_incidents
+		SET reason = $2, health_after = $3::health_state, severity = $4::incident_severity, updated_at = NOW()
+		WHERE id = $1 AND status <> 'resolved'
+	`, iid, reason, string(health), sev)
+	return err
+}
+
 func (s *Store) UpdateAtlasIncidentStatus(ctx context.Context, incidentID string, status domain.IncidentStatus) error {
 	iid, err := uuid.Parse(incidentID)
 	if err != nil {
@@ -279,7 +296,12 @@ func (s *Store) ListAtlasIncidents(ctx context.Context, clusterID, status string
 		FROM atlas_incidents i WHERE i.cluster_id = $1`
 	args := []any{clusterID}
 	n := 2
-	if status != "" && status != "all" {
+	switch status {
+	case "", "active":
+		q += ` AND i.status <> 'resolved'`
+	case "all":
+		// no filter
+	default:
 		q += fmt.Sprintf(` AND i.status = $%d::incident_status`, n)
 		args = append(args, status)
 		n++
@@ -433,6 +455,15 @@ func (s *Store) GetRecommendation(ctx context.Context, id string) (*domain.Remed
 		FROM remediation_recommendations WHERE id = $1
 	`, rid)
 	return scanRecommendation(row)
+}
+
+func (s *Store) ClearRecommendationsForIncident(ctx context.Context, incidentID string) error {
+	iid, err := uuid.Parse(incidentID)
+	if err != nil {
+		return err
+	}
+	_, err = s.pool.Exec(ctx, `DELETE FROM remediation_recommendations WHERE incident_id = $1`, iid)
+	return err
 }
 
 func (s *Store) ListRecommendations(ctx context.Context, incidentID string) ([]domain.RemediationRecommendation, error) {

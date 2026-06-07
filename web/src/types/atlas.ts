@@ -65,6 +65,13 @@ export interface RemediationRecommendation {
   created_at: string;
 }
 
+export interface IncidentWorkflow {
+  incident: AtlasIncident;
+  investigation?: AIInvestigation;
+  remediations: RemediationRecommendation[];
+  resource_health?: ResourceHealth;
+}
+
 export interface ExecutionRecord {
   id: string;
   recommendation_id: string;

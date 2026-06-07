@@ -27,15 +27,7 @@ func (e *Engine) HandleTransition(ctx context.Context, t health.Transition) erro
 	if t.Previous == domain.HealthHealthy && (t.Current == domain.HealthWarning || t.Current == domain.HealthCritical) {
 		return e.openIncident(ctx, t)
 	}
-	if t.Previous != domain.HealthHealthy && t.Current == domain.HealthHealthy {
-		return e.resolveForResource(ctx, t.Resource.ID)
-	}
-	if t.Current == domain.HealthCritical && t.Previous == domain.HealthWarning {
-		open, err := e.store.GetOpenAtlasIncidentForResource(ctx, t.Resource.ID)
-		if err == nil && open != nil {
-			_ = e.store.UpdateAtlasIncidentStatus(ctx, open.ID, domain.IncidentInvestigating)
-		}
-	}
+	// Incidents stay active until the operator verifies them manually.
 	return nil
 }
 
@@ -58,6 +50,39 @@ func (e *Engine) openIncident(ctx context.Context, t health.Transition) error {
 		Reason:       t.Health.Reason,
 		HealthBefore: &hb,
 		HealthAfter:  t.Current,
+	}
+	if err := e.store.CreateAtlasIncident(ctx, inc); err != nil {
+		return err
+	}
+	if e.notify != nil {
+		e.notify.Publish("incident.opened", map[string]any{"id": inc.ID, "severity": inc.Severity})
+	}
+	return nil
+}
+
+// EnsureOpenForUnhealthy creates an incident when a resource is unhealthy but has no active incident.
+func (e *Engine) EnsureOpenForUnhealthy(ctx context.Context, resource *domain.ClusterResource, h *domain.ResourceHealth) error {
+	if h == nil || h.Health == domain.HealthHealthy {
+		return nil
+	}
+	existing, err := e.store.GetOpenAtlasIncidentForResource(ctx, resource.ID)
+	if err == nil && existing != nil {
+		return nil
+	}
+	sev := domain.SeverityWarning
+	if h.Health == domain.HealthCritical {
+		sev = domain.SeverityCritical
+	}
+	hb := domain.HealthHealthy
+	inc := &domain.AtlasIncident{
+		ClusterID:    e.clusterID,
+		ResourceID:   resource.ID,
+		Title:        fmt.Sprintf("%s/%s %s", resource.Namespace, resource.Name, resource.Kind),
+		Severity:     sev,
+		Status:       domain.IncidentOpen,
+		Reason:       h.Reason,
+		HealthBefore: &hb,
+		HealthAfter:  h.Health,
 	}
 	if err := e.store.CreateAtlasIncident(ctx, inc); err != nil {
 		return err

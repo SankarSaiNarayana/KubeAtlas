@@ -33,6 +33,7 @@ type IncidentRepository interface {
 	GetOpenAtlasIncidentForResource(ctx context.Context, resourceID string) (*domain.AtlasIncident, error)
 	ResolveAtlasIncident(ctx context.Context, incidentID string) error
 	UpdateAtlasIncidentStatus(ctx context.Context, incidentID string, status domain.IncidentStatus) error
+	UpdateAtlasIncidentReason(ctx context.Context, incidentID, reason string, health domain.HealthState) error
 	GetAtlasIncident(ctx context.Context, id string) (*domain.AtlasIncident, error)
 	ListAtlasIncidents(ctx context.Context, clusterID string, status string, limit int) ([]domain.AtlasIncident, error)
 }
@@ -60,6 +61,7 @@ type RemediationRepository interface {
 	SaveRecommendation(ctx context.Context, rec *domain.RemediationRecommendation) error
 	GetRecommendation(ctx context.Context, id string) (*domain.RemediationRecommendation, error)
 	ListRecommendations(ctx context.Context, incidentID string) ([]domain.RemediationRecommendation, error)
+	ClearRecommendationsForIncident(ctx context.Context, incidentID string) error
 	ListByStatus(ctx context.Context, clusterID string, status domain.ActionStatus, limit int) ([]domain.RemediationRecommendation, error)
 	UpdateRecommendationStatus(ctx context.Context, id string, status domain.ActionStatus) error
 }

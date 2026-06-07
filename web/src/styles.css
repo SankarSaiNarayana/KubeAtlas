@@ -665,6 +665,199 @@ tr:hover td {
   margin-top: 0.75rem;
 }
 
+.workflow-steps-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  list-style: none;
+  counter-reset: step;
+}
+
+.workflow-steps-hint li {
+  counter-increment: step;
+}
+
+.workflow-steps-hint li::before {
+  content: counter(step) ". ";
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.workflow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.incident-row {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+}
+
+.incident-row-main {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.incident-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.incident-row-info strong {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.incident-row-reason {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.incident-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.incident-details {
+  margin-top: 0.45rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.35rem;
+}
+
+.incident-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--accent);
+  user-select: none;
+}
+
+.incident-details-body {
+  padding: 0.5rem 0 0.15rem;
+}
+
+.investigation-summary {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.compact-meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+}
+
+.suggestion-box {
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+}
+
+.suggestion-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.suggestion-box p {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+}
+
+.command-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.55rem;
+  background: var(--bg-elevated);
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+}
+
+.command-box code {
+  flex: 1;
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.resource-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.resource-search {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+}
+
+.resource-search:focus {
+  outline: 2px solid var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.resource-filter {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.resource-count {
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.step-badge {
+  background: var(--accent-dim);
+  color: var(--accent);
+  text-transform: none;
+  font-size: 0.75rem;
+}
+
+.workflow-title {
+  flex: 1;
+  min-width: 180px;
+}
+
 .kind-tag {
   font-size: 0.75rem;
   font-weight: 600;

@@ -7,12 +7,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/kube-dashboard/kube_dashboard/internal/ai"
 	"github.com/kube-dashboard/kube_dashboard/internal/api/handlers"
 	"github.com/kube-dashboard/kube_dashboard/internal/api/middleware"
 	"github.com/kube-dashboard/kube_dashboard/internal/config"
 	"github.com/kube-dashboard/kube_dashboard/internal/execution"
 	"github.com/kube-dashboard/kube_dashboard/internal/k8sclient"
+	"github.com/kube-dashboard/kube_dashboard/internal/pipeline"
 	"github.com/kube-dashboard/kube_dashboard/internal/realtime"
 	"github.com/kube-dashboard/kube_dashboard/internal/store"
 )
@@ -48,14 +51,25 @@ func main() {
 
 	hub := realtime.NewHub()
 	var exec *execution.Executor
+	var runner *pipeline.Runner
 	if client, _, err := k8sclient.New(); err == nil {
 		exec = execution.NewExecutor(cfg.ClusterID, client, st, st, st, hub)
+		inv := pipeline.DefaultInvestigator(st)
+		rem := pipeline.DefaultRemediation(st)
+		if aiSvc := ai.NewService(cfg.AIServiceURL, st, cfg.AIServiceTimeout); aiSvc.Enabled() {
+			if err := aiSvc.Ping(ctx); err == nil {
+				inv = aiSvc
+				rem = aiSvc
+				log.Printf("api: ai service %s", cfg.AIServiceURL)
+			}
+		}
+		runner = pipeline.NewRunner(cfg.ClusterID, st, client, inv, rem)
 	} else {
-		log.Printf("kubernetes client unavailable for execution: %v", err)
+		log.Printf("kubernetes client unavailable: %v", err)
 	}
 
 	mux := http.NewServeMux()
-	h := handlers.NewWithAtlas(st, cfg, hub, exec)
+	h := handlers.NewWithAtlas(st, cfg, hub, exec, runner)
 	h.Register(mux)
 
 	server := &http.Server{Addr: cfg.APIAddr, Handler: middleware.CORS(middleware.Auth(mux, cfg))}
@@ -67,5 +81,7 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	_ = server.Shutdown(context.Background())
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = server.Shutdown(shutdownCtx)
 }

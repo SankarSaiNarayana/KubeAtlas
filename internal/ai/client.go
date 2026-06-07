@@ -12,6 +12,7 @@ import (
 
 	"github.com/kube-dashboard/kube_dashboard/internal/domain"
 	"github.com/kube-dashboard/kube_dashboard/internal/ports"
+	"github.com/kube-dashboard/kube_dashboard/internal/remediation"
 )
 
 // Service calls the Python/FastAPI AI microservice for investigation and remediation.
@@ -92,26 +93,32 @@ func (s *Service) Generate(ctx context.Context, inc *domain.AtlasIncident, resou
 	}, &resp); err != nil {
 		return nil, err
 	}
-	var out []domain.RemediationRecommendation
-	for _, r := range resp.Recommendations {
-		params, _ := json.Marshal(r.Parameters)
-		rec := domain.RemediationRecommendation{
-			IncidentID:       inc.ID,
-			InvestigationID:  inv.ID,
-			ActionType:       r.ActionType,
-			Reason:           r.Reason,
-			ConfidenceScore:  r.ConfidenceScore,
-			RiskScore:        r.RiskScore,
-			ExpectedOutcome:  r.ExpectedOutcome,
-			Parameters:       params,
-			Status:           domain.ActionPending,
-		}
-		if err := s.store.SaveRecommendation(ctx, &rec); err != nil {
-			return nil, err
-		}
-		out = append(out, rec)
+	if len(resp.Recommendations) == 0 {
+		return nil, nil
 	}
-	return out, nil
+	best := resp.Recommendations[0]
+	for _, r := range resp.Recommendations[1:] {
+		if r.ConfidenceScore > best.ConfidenceScore {
+			best = r
+		}
+	}
+	params := remediation.EnrichParameters(best.ActionType, best.Parameters)
+	paramJSON, _ := json.Marshal(params)
+	rec := domain.RemediationRecommendation{
+		IncidentID:       inc.ID,
+		InvestigationID:  inv.ID,
+		ActionType:       best.ActionType,
+		Reason:           best.Reason,
+		ConfidenceScore:  best.ConfidenceScore,
+		RiskScore:        best.RiskScore,
+		ExpectedOutcome:  best.ExpectedOutcome,
+		Parameters:       paramJSON,
+		Status:           domain.ActionPending,
+	}
+	if err := s.store.SaveRecommendation(ctx, &rec); err != nil {
+		return nil, err
+	}
+	return []domain.RemediationRecommendation{rec}, nil
 }
 
 func (s *Service) post(ctx context.Context, path string, body any, dest any) error {

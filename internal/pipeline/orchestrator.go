@@ -118,61 +118,30 @@ func (o *Orchestrator) reconcileAll(ctx context.Context) {
 			continue
 		}
 		_ = o.health.EvaluateResource(ctx, r, o.onHealthTransition)
+		if r.Health != nil && r.Health.Health != domain.HealthHealthy {
+			_ = o.incidents.EnsureOpenForUnhealthy(ctx, r, r.Health)
+		}
 	}
-	o.processOpenIncidents(ctx)
+	o.processActiveIncidents(ctx)
 }
 
 func (o *Orchestrator) onHealthTransition(ctx context.Context, t health.Transition) error {
-	if err := o.incidents.HandleTransition(ctx, t); err != nil {
-		return err
-	}
-	if t.Current != domain.HealthHealthy && (t.Previous == domain.HealthHealthy || t.Previous == domain.HealthWarning) {
-		open, err := o.store.GetOpenAtlasIncidentForResource(ctx, t.Resource.ID)
-		if err == nil && open != nil {
-			go o.runIncidentPipeline(context.Background(), open, t.Resource)
-		}
-	}
-	return nil
+	return o.incidents.HandleTransition(ctx, t)
 }
 
-func (o *Orchestrator) processOpenIncidents(ctx context.Context) {
-	list, err := o.store.ListAtlasIncidents(ctx, o.clusterID, "open", 50)
+func (o *Orchestrator) processActiveIncidents(ctx context.Context) {
+	list, err := o.store.ListAtlasIncidents(ctx, o.clusterID, "active", 100)
 	if err != nil {
 		return
 	}
 	for i := range list {
 		inc := &list[i]
-		res, err := o.store.GetResource(ctx, inc.ResourceID)
-		if err != nil {
+		health, err := o.store.GetHealth(ctx, inc.ResourceID)
+		if err != nil || health == nil {
 			continue
 		}
-		if _, err := o.store.GetInvestigation(ctx, inc.ID); err != nil {
-			go o.runIncidentPipeline(context.Background(), inc, res)
-		}
-	}
-}
-
-func (o *Orchestrator) runIncidentPipeline(ctx context.Context, inc *domain.AtlasIncident, resource *domain.ClusterResource) {
-	_ = o.store.UpdateAtlasIncidentStatus(ctx, inc.ID, domain.IncidentInvestigating)
-	ic, err := o.context.Collect(ctx, inc, resource)
-	if err != nil {
-		log.Printf("context collect %s: %v", inc.ID, err)
-		return
-	}
-	inv, err := o.investigator.Investigate(ctx, inc, resource, ic)
-	if err != nil {
-		log.Printf("investigate %s: %v", inc.ID, err)
-		return
-	}
-	recs, err := o.remediation.Generate(ctx, inc, resource, inv)
-	if err != nil {
-		log.Printf("remediation %s: %v", inc.ID, err)
-		return
-	}
-	if len(recs) > 0 {
-		_ = o.store.UpdateAtlasIncidentStatus(ctx, inc.ID, domain.IncidentAwaitingApproval)
-		if o.hub != nil {
-			o.hub.Publish("incident.pipeline_complete", map[string]any{"incident_id": inc.ID})
+		if health.Reason != inc.Reason {
+			_ = o.store.UpdateAtlasIncidentReason(ctx, inc.ID, health.Reason, health.Health)
 		}
 	}
 }

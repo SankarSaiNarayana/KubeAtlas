@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   connectEventStream,
   getAtlasExecutions,
+  getAtlasIncidentWorkflow,
   getAtlasIncidents,
   getAtlasInvestigations,
   getAtlasOverview,
@@ -15,6 +16,7 @@ import type {
   AtlasOverview,
   ClusterResource,
   ExecutionRecord,
+  IncidentWorkflow,
   RemediationRecommendation,
 } from "../types/atlas";
 
@@ -25,6 +27,7 @@ export function useKubeAtlas() {
   const [overview, setOverview] = useState<AtlasOverview | null>(null);
   const [resources, setResources] = useState<ClusterResource[]>([]);
   const [atlasIncidents, setAtlasIncidents] = useState<AtlasIncident[]>([]);
+  const [workflows, setWorkflows] = useState<IncidentWorkflow[]>([]);
   const [investigations, setInvestigations] = useState<
     { incident: AtlasIncident; investigation?: AIInvestigation }[]
   >([]);
@@ -41,10 +44,11 @@ export function useKubeAtlas() {
     try {
       const health = await getHealth();
       setClusterId(health.cluster_id);
-      const [o, r, inc, inv, remPending, remApproved, ex] = await Promise.all([
+      const [o, r, inc, wf, inv, remPending, remApproved, ex] = await Promise.all([
         getAtlasOverview(),
         getAtlasResources(),
-        getAtlasIncidents("open"),
+        getAtlasIncidents("active"),
+        getAtlasIncidentWorkflow(),
         getAtlasInvestigations(),
         getAtlasRemediations("pending"),
         getAtlasRemediations("approved"),
@@ -53,6 +57,7 @@ export function useKubeAtlas() {
       setOverview(o);
       setResources(r.resources ?? []);
       setAtlasIncidents(inc.incidents ?? []);
+      setWorkflows(wf.workflows ?? []);
       setInvestigations(inv.investigations ?? []);
       setRemediations([
         ...(remPending.remediations ?? []),
@@ -84,6 +89,7 @@ export function useKubeAtlas() {
     overview,
     resources,
     atlasIncidents,
+    workflows,
     investigations,
     remediations,
     executions,

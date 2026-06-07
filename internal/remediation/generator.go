@@ -3,7 +3,6 @@ package remediation
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 	"strings"
 
 	"github.com/kube-dashboard/kube_dashboard/internal/domain"
@@ -23,7 +22,7 @@ func NewEngine(store ports.RemediationRepository) *Engine {
 }
 
 func (e *Engine) Generate(ctx context.Context, inc *domain.AtlasIncident, resource *domain.ClusterResource, inv *domain.AIInvestigation) ([]domain.RemediationRecommendation, error) {
-	recs := buildRecommendations(inc, resource, inv)
+	recs := PickBest(buildRecommendations(inc, resource, inv))
 	var out []domain.RemediationRecommendation
 	for i := range recs {
 		recs[i].IncidentID = inc.ID
@@ -38,39 +37,39 @@ func (e *Engine) Generate(ctx context.Context, inc *domain.AtlasIncident, resour
 }
 
 func buildRecommendations(inc *domain.AtlasIncident, resource *domain.ClusterResource, inv *domain.AIInvestigation) []domain.RemediationRecommendation {
-	var recs []domain.RemediationRecommendation
 	reason := strings.ToLower(inc.Reason)
 	rc := strings.ToLower(inv.RootCause)
 
 	switch resource.Kind {
 	case "Pod":
 		if strings.Contains(reason, "crashloop") || strings.Contains(rc, "crash") {
-			recs = append(recs, rec(domain.ActionDeleteFailedPod, "Remove failing pod to allow controller recreation",
-				0.85, 0.35, "New pod scheduled with fresh state", params(resource)))
-			recs = append(recs, rec(domain.ActionRestartPod, "Delete pod to trigger restart by owner",
-				0.8, 0.3, "Pod recreated by ReplicaSet/Deployment", params(resource)))
-		} else {
-			recs = append(recs, rec(domain.ActionRestartPod, "Restart pod to recover transient failure",
-				0.7, 0.25, "Pod replaced with same spec", params(resource)))
+			return []domain.RemediationRecommendation{
+				rec(domain.ActionDeleteFailedPod, "Delete the failing pod so the controller recreates it",
+					0.85, 0.35, "A fresh pod will be scheduled", params(resource)),
+			}
+		}
+		return []domain.RemediationRecommendation{
+			rec(domain.ActionRestartPod, "Restart the pod to recover from a transient failure",
+				0.75, 0.25, "Pod replaced with the same spec", params(resource)),
 		}
 	case "Deployment":
 		if strings.Contains(reason, "replica") || strings.Contains(rc, "replica") {
-			recs = append(recs, rec(domain.ActionRestartDeployment, "Rollout restart to recreate pods",
-				0.82, 0.45, "Rolling restart of all deployment pods", params(resource)))
-			recs = append(recs, rec(domain.ActionRollbackDeployment, "Rollback to previous revision if recent change caused failure",
-				0.75, 0.55, "Deployment rolled back to prior ReplicaSet", params(resource)))
+			return []domain.RemediationRecommendation{
+				rec(domain.ActionRestartDeployment, "Rollout restart to recreate unhealthy pods",
+					0.82, 0.45, "Deployment pods roll out with a clean state", params(resource)),
+			}
 		}
-		recs = append(recs, rec(domain.ActionScaleDeployment, "Temporary scale up for redundancy during fix",
-			0.6, 0.4, "Additional replica may absorb traffic during recovery", scaleParams(resource, 1)))
+		return []domain.RemediationRecommendation{
+			rec(domain.ActionRestartDeployment, "Rollout restart the deployment",
+				0.7, 0.4, "Pods are recreated gradually", params(resource)),
+		}
 	default:
-		if resource.Kind == "Pod" {
-			recs = append(recs, rec(domain.ActionRestartPod, "Restart affected workload", 0.65, 0.3, "Workload restarted", params(resource)))
-		}
+		return nil
 	}
-	return recs
 }
 
 func rec(actionType, reason string, conf, risk float64, outcome string, p map[string]string) domain.RemediationRecommendation {
+	p = EnrichParameters(actionType, p)
 	b, _ := json.Marshal(p)
 	return domain.RemediationRecommendation{
 		ActionType:      actionType,
@@ -86,10 +85,4 @@ func params(r *domain.ClusterResource) map[string]string {
 	return map[string]string{
 		"namespace": r.Namespace, "name": r.Name, "kind": r.Kind, "uid": r.ResourceUID,
 	}
-}
-
-func scaleParams(r *domain.ClusterResource, delta int) map[string]string {
-	p := params(r)
-	p["scale_delta"] = strconv.Itoa(delta)
-	return p
 }

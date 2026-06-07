@@ -12,6 +12,7 @@ import (
 	"github.com/kube-dashboard/kube_dashboard/internal/config"
 	"github.com/kube-dashboard/kube_dashboard/internal/execution"
 	"github.com/kube-dashboard/kube_dashboard/internal/models"
+	"github.com/kube-dashboard/kube_dashboard/internal/pipeline"
 	"github.com/kube-dashboard/kube_dashboard/internal/realtime"
 	"github.com/kube-dashboard/kube_dashboard/internal/store"
 )
@@ -21,14 +22,15 @@ type Handler struct {
 	config   config.Config
 	eventHub *realtime.Hub
 	executor *execution.Executor
+	runner   *pipeline.Runner
 }
 
 func New(st *store.Store, cfg config.Config) *Handler {
 	return &Handler{store: st, config: cfg}
 }
 
-func NewWithAtlas(st *store.Store, cfg config.Config, hub *realtime.Hub, exec *execution.Executor) *Handler {
-	return &Handler{store: st, config: cfg, eventHub: hub, executor: exec}
+func NewWithAtlas(st *store.Store, cfg config.Config, hub *realtime.Hub, exec *execution.Executor, runner *pipeline.Runner) *Handler {
+	return &Handler{store: st, config: cfg, eventHub: hub, executor: exec, runner: runner}
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {

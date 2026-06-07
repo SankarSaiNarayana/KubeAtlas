@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/kube-dashboard/kube_dashboard/internal/domain"
+	"github.com/kube-dashboard/kube_dashboard/internal/remediation"
 )
 
 // RegisterAtlas registers the atlas-related HTTP routes for the API server.
@@ -13,6 +14,7 @@ import (
 func (h *Handler) RegisterAtlas(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/atlas/overview", h.AtlasOverview)
 	mux.HandleFunc("/api/v1/atlas/resources", h.AtlasListResources)
+	mux.HandleFunc("/api/v1/atlas/incidents/workflow", h.AtlasIncidentWorkflow)
 	mux.HandleFunc("/api/v1/atlas/incidents", h.AtlasListIncidents)
 	mux.HandleFunc("/api/v1/atlas/investigations", h.AtlasListInvestigations)
 	mux.HandleFunc("/api/v1/atlas/remediations", h.AtlasListRemediations)
@@ -71,7 +73,7 @@ func (h *Handler) AtlasListIncidents(w http.ResponseWriter, r *http.Request) {
 	clusterID := queryOrDefault(r, "cluster_id", h.config.ClusterID)
 	status := r.URL.Query().Get("status")
 	if status == "" {
-		status = "open"
+		status = "active"
 	}
 	incidents, err := h.store.ListAtlasIncidents(r.Context(), clusterID, status, 200)
 	if err != nil {
@@ -84,6 +86,46 @@ func (h *Handler) AtlasListIncidents(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"incidents": incidents})
 }
 
+// AtlasIncidentWorkflow returns active incidents with investigation and remediation in one response.
+func (h *Handler) AtlasIncidentWorkflow(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	clusterID := queryOrDefault(r, "cluster_id", h.config.ClusterID)
+	incidents, err := h.store.ListAtlasIncidents(r.Context(), clusterID, "active", 200)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	type row struct {
+		Incident       domain.AtlasIncident                 `json:"incident"`
+		Investigation  *domain.AIInvestigation            `json:"investigation,omitempty"`
+		Remediations   []domain.RemediationRecommendation `json:"remediations"`
+		ResourceHealth *domain.ResourceHealth             `json:"resource_health,omitempty"`
+	}
+	var out []row
+	for i := range incidents {
+		inc := incidents[i]
+		var inv *domain.AIInvestigation
+		recs := []domain.RemediationRecommendation{}
+		if inc.Status != domain.IncidentOpen {
+			inv, _ = h.store.GetInvestigation(r.Context(), inc.ID)
+			recs, _ = h.store.ListRecommendations(r.Context(), inc.ID)
+			recs = remediation.PickBest(recs)
+		}
+		var rh *domain.ResourceHealth
+		if health, err := h.store.GetHealth(r.Context(), inc.ResourceID); err == nil {
+			rh = health
+		}
+		out = append(out, row{Incident: inc, Investigation: inv, Remediations: recs, ResourceHealth: rh})
+	}
+	if out == nil {
+		out = []row{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"workflows": out})
+}
+
 // AtlasListInvestigations returns all incidents along with attached investigation summaries.
 // It loads all incidents for the cluster and then looks up an investigation record for each incident.
 func (h *Handler) AtlasListInvestigations(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +134,7 @@ func (h *Handler) AtlasListInvestigations(w http.ResponseWriter, r *http.Request
 		return
 	}
 	clusterID := queryOrDefault(r, "cluster_id", h.config.ClusterID)
-	incidents, err := h.store.ListAtlasIncidents(r.Context(), clusterID, "all", 100)
+	incidents, err := h.store.ListAtlasIncidents(r.Context(), clusterID, "active", 100)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -254,6 +296,45 @@ func (h *Handler) atlasIncidentRoutes(w http.ResponseWriter, r *http.Request, pa
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"remediations": recs})
+			return
+		case "investigate":
+			if r.Method != http.MethodPost {
+				break
+			}
+			if h.runner == nil {
+				writeError(w, http.StatusServiceUnavailable, "investigation unavailable: API needs cluster access and AI_SERVICE_URL")
+				return
+			}
+			inc, inv, recs, err := h.runner.InvestigateIncident(r.Context(), id)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if h.eventHub != nil {
+				h.eventHub.Publish("incident.investigated", map[string]string{"id": id})
+			}
+			var rh *domain.ResourceHealth
+			if health, err := h.store.GetHealth(r.Context(), inc.ResourceID); err == nil {
+				rh = health
+			}
+			writeJSON(w, http.StatusOK, map[string]any{
+				"workflow": map[string]any{
+					"incident": inc, "investigation": inv, "remediations": recs, "resource_health": rh,
+				},
+			})
+			return
+		case "verify":
+			if r.Method != http.MethodPost {
+				break
+			}
+			if err := h.store.ResolveAtlasIncident(r.Context(), id); err != nil {
+				writeError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if h.eventHub != nil {
+				h.eventHub.Publish("incident.verified", map[string]string{"id": id})
+			}
+			writeJSON(w, http.StatusOK, map[string]string{"status": "verified"})
 			return
 		}
 	}

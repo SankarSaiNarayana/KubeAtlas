@@ -1,12 +1,10 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import ConnectionBanner from "./components/ConnectionBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { DashboardProvider, useDashboardContext } from "./context/DashboardContext";
 import AtlasIncidentsPage from "./pages/AtlasIncidentsPage";
 import AtlasOverviewPage from "./pages/AtlasOverviewPage";
 import ExecutionsPage from "./pages/ExecutionsPage";
-import InvestigationsPage from "./pages/InvestigationsPage";
-import RemediationPage from "./pages/RemediationPage";
 import ResourcesPage from "./pages/ResourcesPage";
 
 function Sidebar() {
@@ -36,12 +34,6 @@ function Sidebar() {
         </NavLink>
         <NavLink to="/incidents">
           <span className="nav-icon">!</span> Incidents
-        </NavLink>
-        <NavLink to="/investigations">
-          <span className="nav-icon">⌕</span> Investigations
-        </NavLink>
-        <NavLink to="/remediation">
-          <span className="nav-icon">⚙</span> Remediation
         </NavLink>
         <NavLink to="/executions">
           <span className="nav-icon">↯</span> Executions
@@ -73,9 +65,9 @@ function AppShell() {
             <Route path="/" element={<AtlasOverviewPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/incidents" element={<AtlasIncidentsPage />} />
-            <Route path="/investigations" element={<InvestigationsPage />} />
-            <Route path="/remediation" element={<RemediationPage />} />
             <Route path="/executions" element={<ExecutionsPage />} />
+            <Route path="/investigations" element={<Navigate to="/incidents" replace />} />
+            <Route path="/remediation" element={<Navigate to="/incidents" replace />} />
           </Routes>
         </main>
       </div>

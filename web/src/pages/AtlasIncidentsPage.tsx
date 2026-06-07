@@ -1,34 +1,28 @@
-import { Link } from "react-router-dom";
+import IncidentWorkflowCard from "../components/IncidentWorkflowCard";
 import { useDashboardContext } from "../context/DashboardContext";
 
 export default function AtlasIncidentsPage() {
-  const { atlasIncidents } = useDashboardContext();
+  const { workflows, loading, refresh } = useDashboardContext();
 
   return (
     <div className="page">
       <header className="page-header">
         <h2>Incidents</h2>
-        <p className="muted">Auto-created when health degrades from HEALTHY</p>
+        <p className="muted">
+          Unhealthy resources appear here. Run investigation for AI analysis, then verify when done.
+        </p>
       </header>
-      {atlasIncidents.length === 0 ? (
-        <p className="muted">No open incidents</p>
+
+      {loading ? (
+        <p className="muted">Loading…</p>
+      ) : workflows.length === 0 ? (
+        <p className="muted">No active incidents</p>
       ) : (
-        <ul className="incident-list">
-          {atlasIncidents.map((inc) => (
-            <li key={inc.id} className="incident-card">
-              <span className={`incident-pulse ${inc.severity}`} />
-              <div>
-                <strong>{inc.title}</strong>
-                <span className="muted">{inc.reason}</span>
-              </div>
-              <span className={`badge ${inc.severity}`}>{inc.severity}</span>
-              <span className="badge open">{inc.status}</span>
-              <Link to="/investigations" className="link-sm">
-                Investigate →
-              </Link>
-            </li>
+        <div className="workflow-list">
+          {workflows.map((wf) => (
+            <IncidentWorkflowCard key={wf.incident.id} workflow={wf} onUpdate={refresh} />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

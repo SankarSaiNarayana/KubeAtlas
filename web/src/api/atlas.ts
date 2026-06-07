@@ -5,6 +5,7 @@ import type {
   AtlasOverview,
   ClusterResource,
   ExecutionRecord,
+  IncidentWorkflow,
   RemediationRecommendation,
 } from "../types/atlas";
 
@@ -20,7 +21,24 @@ export function getAtlasResources(kind?: string, namespace?: string) {
   return fetchJSON<{ resources: ClusterResource[] }>(`/api/v1/atlas/resources${q}`);
 }
 
-export function getAtlasIncidents(status = "open") {
+export function getAtlasIncidentWorkflow() {
+  return fetchJSON<{ workflows: IncidentWorkflow[] }>("/api/v1/atlas/incidents/workflow");
+}
+
+export function runInvestigation(incidentId: string) {
+  return fetchJSON<{ workflow: IncidentWorkflow }>(
+    `/api/v1/atlas/incidents/${incidentId}/investigate`,
+    { method: "POST" },
+  );
+}
+
+export function verifyIncident(incidentId: string) {
+  return fetchJSON<{ status: string }>(`/api/v1/atlas/incidents/${incidentId}/verify`, {
+    method: "POST",
+  });
+}
+
+export function getAtlasIncidents(status = "active") {
   return fetchJSON<{ incidents: AtlasIncident[] }>(
     `/api/v1/atlas/incidents?status=${encodeURIComponent(status)}`,
   );
