@@ -48,7 +48,7 @@ setup-ai:
 run-api:
 	go run ./cmd/api
 
-export GROQ_API_KEY=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
+export GROQ_API_KEY=
 
 run-ai: setup-ai
 	services/ai/.venv/bin/uvicorn app.main:app \
