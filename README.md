@@ -1,53 +1,107 @@
-## 🚀 KubeAtlas — AI-Powered Kubernetes Operations Platform
+# 🚀 KubeAtlas (On-going)
 
-KubeAtlas is an intelligent Kubernetes troubleshooting and operations platform that leverages AI to investigate cluster issues, analyze resource health, identify potential root causes, and provide actionable remediation guidance.
+### AI-Powered Kubernetes Operations & Troubleshooting Platform
 
-The platform collects real-time Kubernetes context—including pods, deployments, services, namespaces, events, and resource utilization—and uses Large Language Models (LLMs) to transform complex infrastructure data into structured operational insights.
+Transforming Kubernetes cluster data into actionable operational intelligence through AI-driven investigation, root-cause analysis, and remediation guidance.
 
-### 🛠 Tech Stack
+---
 
-- Kubernetes
-- Python
-- FastAPI
-- Docker
-- OpenAI / LLM APIs
-- Prompt Engineering
-- REST APIs
-- GitHub Actions
-- Cloud-Native Architecture
+## 🌟 Overview
 
-### ✅ Implemented Features
+KubeAtlas is an AI-powered Kubernetes operations platform designed to help engineers investigate incidents, understand cluster behavior, and accelerate troubleshooting.
 
-- Real-time Kubernetes resource discovery
-- Cluster-wide workload inspection
-- Pod, Deployment, Service, and Namespace analysis
-- Kubernetes event collection and processing
-- AI-powered investigation workflows
-- Root cause analysis using LLMs
+By combining real-time Kubernetes context with Large Language Models (LLMs), KubeAtlas converts complex infrastructure signals into human-readable insights, helping teams reduce debugging time and improve operational efficiency.
+
+---
+
+## ⚡ Core Capabilities
+
+🔍 **Cluster Discovery**
+- Real-time Kubernetes resource collection
+- Namespace, Deployment, Pod, and Service inspection
+- Cluster-wide visibility
+
+🤖 **AI-Powered Investigation**
+- Context-aware issue analysis
+- Failure pattern detection
+- Operational insight generation
+
+📊 **Root Cause Analysis**
+- Resource state correlation
+- Event-driven diagnostics
+- Structured incident summaries
+
+🛠 **Remediation Guidance**
+- Actionable troubleshooting recommendations
+- Best-practice suggestions
+- Operational workflow acceleration
+
+
+
+## ✅ What Has Been Built
+
+- Kubernetes resource discovery engine
+- Cluster context aggregation workflows
+- Pod and deployment investigation pipelines
+- Namespace-level analysis
+- Event collection and interpretation
+- AI-assisted troubleshooting workflows
+- Root-cause investigation engine
 - Structured remediation recommendations
-- Natural language cluster troubleshooting
-- REST APIs for investigation and remediation
-- Health check and monitoring endpoints
-- Containerized deployment with Docker
-- Extensible architecture for future integrations
+- REST API endpoints for investigations
+- Health and readiness monitoring
+- Dockerized deployment architecture
+- Modular and extensible platform design
 
-### 🚧 Currently Under Development
+---
 
-- Multi-cluster investigation support
-- Intelligent log collection and analysis
-- OpenSearch integration for log querying
-- Prometheus and Grafana integrations
-- Historical incident tracking
-- Incident knowledge base generation
-- Kubernetes security and compliance analysis
-- Cost and resource optimization recommendations
-- AI-powered Kubernetes Operations Assistant
-- Agentic remediation workflows
-- Predictive issue detection
-- Automated infrastructure health reports
-- Self-healing remediation suggestions
-- Dashboard for cluster insights and investigations
+## 🚧 Currently In Progress
 
-### 🎯 Project Goal
+### 📈 Observability
 
-KubeAtlas aims to simplify Kubernetes operations by combining cloud-native observability with AI-powered reasoning, enabling engineers & SREs to diagnose issues faster, reduce manual troubleshooting effort, and improve overall platform reliability.
+- OpenSearch integration
+- Centralized log analysis
+- Log correlation workflows
+- Historical investigation tracking
+
+### 🤖 AI Enhancements
+
+- Agentic investigation workflows
+- Multi-step reasoning pipelines
+- Context enrichment mechanisms
+- Intelligent recommendation engine
+
+### ☁️ Platform Features
+
+- Multi-cluster support
+- Cluster inventory management
+- Infrastructure health scoring
+- Operational reporting
+
+### 🔐 Security & Governance
+
+- Security posture analysis
+- Kubernetes best-practice validation
+- Misconfiguration detection
+- Compliance insights
+
+### 💰 Optimization
+
+- Resource utilization analysis
+- Cost optimization recommendations
+- Capacity planning insights
+
+### ⚡ Future Vision
+
+- Self-healing remediation workflows
+- Predictive incident detection
+- AI-powered Kubernetes Copilot
+- Automated operational runbooks
+
+---
+
+## 🎯 Mission
+
+KubeAtlas aims to bridge the gap between Kubernetes operations and artificial intelligence by empowering engineers with intelligent investigation capabilities, automated operational insights, and scalable cloud-native troubleshooting workflows.
+
+> Building the future of AI-assisted Kubernetes Operations.
