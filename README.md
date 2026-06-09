@@ -14,89 +14,26 @@ By combining real-time Kubernetes context with Large Language Models (LLMs), Kub
 
 ---
 
-## ⚡ Core Capabilities
-
-🔍 **Cluster Discovery**
-- Real-time Kubernetes resource collection
-- Namespace, Deployment, Pod, and Service inspection
-- Cluster-wide visibility
-
-🤖 **AI-Powered Investigation**
-- Context-aware issue analysis
-- Failure pattern detection
-- Operational insight generation
-
-📊 **Root Cause Analysis**
-- Resource state correlation
-- Event-driven diagnostics
-- Structured incident summaries
-
-🛠 **Remediation Guidance**
-- Actionable troubleshooting recommendations
-- Best-practice suggestions
-- Operational workflow acceleration
-
-
-
-## ✅ What Has Been Built
-
-- Kubernetes resource discovery engine
-- Cluster context aggregation workflows
-- Pod and deployment investigation pipelines
-- Namespace-level analysis
-- Event collection and interpretation
-- AI-assisted troubleshooting workflows
-- Root-cause investigation engine
-- Structured remediation recommendations
-- REST API endpoints for investigations
-- Health and readiness monitoring
-- Dockerized deployment architecture
-- Modular and extensible platform design
-
----
-
-## 🚧 Currently In Progress
-
-### 📈 Observability
-
-- OpenSearch integration
-- Centralized log analysis
-- Log correlation workflows
-- Historical investigation tracking
-
-### 🤖 AI Enhancements
-
-- Agentic investigation workflows
-- Multi-step reasoning pipelines
-- Context enrichment mechanisms
-- Intelligent recommendation engine
-
-### ☁️ Platform Features
-
-- Multi-cluster support
-- Cluster inventory management
-- Infrastructure health scoring
-- Operational reporting
-
-### 🔐 Security & Governance
-
-- Security posture analysis
-- Kubernetes best-practice validation
-- Misconfiguration detection
-- Compliance insights
-
-### 💰 Optimization
-
-- Resource utilization analysis
-- Cost optimization recommendations
-- Capacity planning insights
-
-### ⚡ Future Vision
-
-- Self-healing remediation workflows
-- Predictive incident detection
-- AI-powered Kubernetes Copilot
-- Automated operational runbooks
+Incident occurs in K8s
+     ↓
+Go Worker watches cluster (via client-go)
+     ↓ (collects incident context)
+Go collects: events, logs, pod describe, deployment YAML
+     ↓
+Go calls: POST http://localhost:8090/v1/investigate
+     ├─ incident data
+     ├─ resource metadata
+     └─ context (events, logs, describe data)
+     ↓
+Python AI service RECEIVES this data
+     ↓
+Python does NOT query K8s again
+     ↓
+Python calls Groq LLM with received context
+     ↓
+Groq returns investigation → Python returns JSON to Go
+     ↓
+Go stores in PostgreSQL + sends to UI
 
 ---
 
