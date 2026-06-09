@@ -7,7 +7,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .k8s import list_cluster_resources
+# from .k8s import list_cluster_resources
 from .llm import _provider, investigate, remediate
 from .schemas import (
     HealthResponse,
@@ -67,12 +67,12 @@ def post_remediate(body: RemediateRequest) -> RemediateResponse:
     return result
 
 
-@app.get("/v1/cluster/resources")
-def get_cluster_resources() -> dict[str, list[dict[str, object]]]:
-    try:
-        return list_cluster_resources()
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+# @app.get("/v1/cluster/resources")
+# def get_cluster_resources() -> dict[str, list[dict[str, object]]]:
+#     try:
+#         return list_cluster_resources()
+#     except Exception as exc:
+#         raise HTTPException(status_code=500, detail=str(exc))
 
 
 def run() -> None:
